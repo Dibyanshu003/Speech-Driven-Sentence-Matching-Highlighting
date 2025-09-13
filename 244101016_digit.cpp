@@ -1,7 +1,5 @@
-// 244101016_digit.cpp : Defines the entry point for the console application.
+// final_project_speech.cpp : Defines the entry point for the console application.
 //
-
-
 #include "StdAfx.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +15,8 @@
 #include "cmath"
 #include "conio.h"
 #include <Windows.h>
+#include <string.h>
+#include <ctype.h>
 using namespace std;
 
 #define LPC_ORDER 12  // Order of LPC (Linear Predictive Coding)
@@ -27,14 +27,12 @@ int TOTAL_FRAMES;  // Number of frames to process
 
 // Global arrays to store signal data and computed values
 int totalSamples;
-double rawSignalData[65][FRAME_SIZE];  // Signal data for each frame
-double autocorrelation[65][LPC_ORDER + 1];  // Autocorrelation coefficients
-double lpcCoefficients[65][LPC_ORDER + 1];  // LPC coefficients
-double cepstralCoefficients[65][LPC_ORDER + 1];  // Cepstral coefficients
+double rawSignalData[68][FRAME_SIZE];  // Signal data for each frame
+double autocorrelation[68][LPC_ORDER + 1];  // Autocorrelation coefficients
+double lpcCoefficients[68][LPC_ORDER + 1];  // LPC coefficients
+double cepstralCoefficients[68][LPC_ORDER + 1];  // Cepstral coefficients
 double rawSignal[22000] = {0.0};  // Raw signal data
  double universe[15207][12]; 
-//for copying to universe
-//#define VALUES_PER_ROW 12
 #define MAX_LINE_LENGTH 1024
 #define TOTAL_FILES 400
 #define FILENAME_SIZE 30
@@ -713,7 +711,7 @@ void modeltraining()
 		HMM2();
 		new_Pstar=viterbi_algo();
 		HMM3();
-		cout<<"iteration"<< iter<<endl;
+		//cout<<"iteration"<< iter<<endl;
 	}while(iter!=100 && old_Pstar<new_Pstar);
 }
 
@@ -816,10 +814,10 @@ void taketestingobservation(const char* filename4){
 long double probability = 0;
 long double prob[10]={0};
 int correct,wrong;
-
+int idx=-1;
 void testing(int val)
 {
-	int idx=-1;
+	//int idx=-1;
 	long double maxi=LDBL_MIN;
 	for(int i=0;i<=9;i++)
 	{
@@ -838,6 +836,7 @@ void testing(int val)
 	else{
 		wrong++;
 		cout<<val <<"-->"<<"wrong"<<endl;
+		idx = 10;
 	}
 }
 
@@ -921,7 +920,7 @@ void answer(int val)
 #define BATCH 300
 
 short int waveIn[32050];
-int main_arr[DATA];
+int main_arr[32050];
 
 void recordvaluetofile(const char* filename2){
 	  FILE *file2 = fopen(filename2, "w");
@@ -930,10 +929,10 @@ void recordvaluetofile(const char* filename2){
         exit(EXIT_FAILURE);
     }
 
-        for (int c = 5000; c <27000 ; c++) {
+        for (int c = 8000; c <24000 ; c++) {
             fprintf(file2, "%d ", main_arr[c]);
            // ansstore[c] = 0;  // Reset for next use
-			if(c != 26999)
+			if(c != 23999)
 			   fprintf(file2, "\n");
         }
 
@@ -982,8 +981,8 @@ void startrecord(){
     pFormat.wFormatTag = WAVE_FORMAT_PCM;     // simple, uncompressed format
     pFormat.nChannels = 1;                    //  1=mono, 2=stereo
     pFormat.nSamplesPerSec = sampleRate;      // 8.0 kHz, 11.025 kHz, 22.05 kHz, and 44.1 kHz
-    pFormat.nAvgBytesPerSec = sampleRate * 2; // =  nSamplesPerSec × nBlockAlign
-    pFormat.nBlockAlign = 2;                  // = (nChannels × wBitsPerSample) / 8
+    pFormat.nAvgBytesPerSec = sampleRate * 2; // =  nSamplesPerSec   nBlockAlign
+    pFormat.nBlockAlign = 2;                  // = (nChannels   wBitsPerSample) / 8
     pFormat.wBitsPerSample = 16;              //  16 for high quality, 8 for telephone-grade
     pFormat.cbSize = 0;
 
@@ -1017,62 +1016,100 @@ void startrecord(){
     }
 
     PlayRecord();
-	char outputFilePathforstep6[100]= "";
-	
-	int A =1;
-	sprintf(outputFilePathforstep6, "./RECORDING/244101016_%d.txt",A);
-     recordvaluetofile(outputFilePathforstep6);
-	 char inputFilePath6[100] = "";
-	 sprintf(inputFilePath6, "./RECORDING/244101016_%d.txt",A); 
+	char recordingvalues[100] = "";
+	sprintf(recordingvalues, "./RECORDING/244101016_1");
+	recordvaluetofile(recordingvalues);
 
-            // Read the signal data from the input file
-     ReadSignalDataFromFile(inputFilePath6);
-	 CorrectDCOffsetInSignal();
-     NormalizeSignalValues();
-	 TOTAL_FRAMES = 22000/320;
-	  SelectSteadyStateFramesFromSignal();
-            for (int j = 0; j < TOTAL_FRAMES; j++) {
-                ApplyHammingWindowToFrame(j);
-            }
-			 for (int j = 0; j < TOTAL_FRAMES; j++) {
-                ComputeAutoCorrelationForFrame(j);
-                ComputeLPCoefficientsForFrame(j);
-                ComputeCepstralCoefficientsForFrame(j);
-            }
-			 char outputFilePath[100] = "";
-			 sprintf(outputFilePath, "./OUTPUTRECORDING/244101016_%d.txt",A);
-              WriteWeightedCepstralCoeffsToFile(outputFilePath);
-			  char inputfileforfindingsequence[100]="";
-			  sprintf(inputfileforfindingsequence, "./OUTPUTRECORDING/244101016_%d.txt",A); 
-	          readfileforstep3(inputfileforfindingsequence);
-			  for(int t =0;t<frameonedigit;t++){
+
+	///////////////////////////// step 1 apply on recording
+	totalSamples = 0;
+    TOTAL_FRAMES=0;
+	char inputFilePath[100] = "";
+	sprintf(inputFilePath,"./RECORDING/244101016_1"); 
+    ReadSignalDataFromFile(inputFilePath);
+	CorrectDCOffsetInSignal();
+    NormalizeSignalValues();
+	TOTAL_FRAMES = totalSamples/FRAME_SIZE;
+	SelectSteadyStateFramesFromSignal();
+	for (int j = 0; j < TOTAL_FRAMES; j++) {
+         ApplyHammingWindowToFrame(j);
+	}
+    for (int j = 0; j < TOTAL_FRAMES; j++) {
+         ComputeAutoCorrelationForFrame(j);
+         ComputeLPCoefficientsForFrame(j);
+         ComputeCepstralCoefficientsForFrame(j);
+    }
+    WriteWeightedCepstralCoeffsToFile("./OUTPUTRECORDING/244101016_1");
+
+
+	///////Now make corresponding observation sequence
+	int nearestR=0;
+	readfileforstep3("./OUTPUTRECORDING/244101016_1");
+	for(int t =0;t<frameonedigit;t++){
 		 double min_dist = DBL_MAX;
-		 int nearest =0;
-		for(int u=0;u<32;u++){
+		 for(int u=0;u<32;u++){
 			double tok_dist = tokhura(framestore[t], codebook[u]);
 			if (tok_dist < min_dist) {
                 min_dist = tok_dist;
-                nearest = u;
+                nearestR = u;
             }
 		}
-		ansstore[t]=nearest+1;
-		nearest =0;
+		ansstore[t]=nearestR+1;
+		nearestR =0;
 	}
-char outputFilePathforstep8[100] = "";
-    sprintf(outputFilePathforstep8, "./RECORDINGSEQUENCE/244101016_%d.txt",A);
-     writeobservation(outputFilePathforstep8);
-	 char inputFilePathforstep5[100] = "";
-		   sprintf(inputFilePathforstep5, "./RECORDINGSEQUENCE/244101016_%d.txt",A);
-	       taketestingobservation(inputFilePathforstep5);
-		   answer(1);
+	writeobservation("./RECORDINGSEQUENCE/244101016_1");
 
+
+	///////////////////step testing
+	FILE *file1 = fopen("./RECORDINGSEQUENCE/244101016_1", "r");
+    if (!file1) {
+        printf("Error opening file.here\n");
+        exit(1);
+    }
+	 char tempStr[150];
+    for(int skip = 0; skip < 15; skip++){
+        fscanf(file1, "%s", tempStr);
+    }
+	T=0;
+	 while (!feof(file1)) {
+		 T++;
+         fscanf(file1, "%ld",&observation[T]);
+    }
+	// T--;
+    fclose(file1);
+	answer(2); 
+	cout<<"done:";
+}
+
+/////////////////////////////////////////////////////////////////////paragraph
+
+#define MAX_PARAGRAPH_LENGTH 10000
+#define MAX_SENTENCE_LENGTH 1000
+// Function to convert a string to lowercase
+void to_lowercase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
+int case_insensitive_compare(const char *str1, const char *str2, int len) {
+    for (int i = 0; i < len; i++) {
+        if (tolower((unsigned char)str1[i]) != tolower((unsigned char)str2[i])) {
+            return 0; // Strings do not match
+        }
+    }
+    return 1; // Strings match
+}
+
+// Function to check if a sentence matches at a given index
+int is_sentence_match(const char *paragraph, const char *sentence, int start, int sent_len) {
+    return case_insensitive_compare(&paragraph[start], sentence, sent_len);
 }
 
 
 //main function started
 int main(int argc, char* argv[])
 {
-	
 	char inputFilePath[100] = "";
     char outputFilePath[100] = "";
     for (int v = 0; v < 10; v++) {
@@ -1184,7 +1221,7 @@ int main(int argc, char* argv[])
     }
 
     fclose(file);
-
+	cout<<endl;
 	printf("step 2 done");
 
 
@@ -1195,7 +1232,6 @@ int main(int argc, char* argv[])
 	char outputFilePathforstep3[100]= "";
 
 	for(int q=1;q<401;q++){
-		printf("hello");
 	 sprintf(inputFilePathforstep3, "./OUTPUT_CEPSTRAL/244101016_%d.txt",q); 
 	readfileforstep3(inputFilePathforstep3);
 	
@@ -1275,7 +1311,7 @@ int main(int argc, char* argv[])
 		store_in_file(extrafilepath4);
 	}
 
-
+	cout<<"training part done"<<endl;
 	/////////////////////////////////////////////////testing step 5
 	
 	for(long long int i=0;i<=9;i++)
@@ -1290,11 +1326,119 @@ int main(int argc, char* argv[])
 	   }
 	   cout<<endl;
 	}
-	cout<<"accuracy -->"<<correct<<"%";
+	cout<<"accuracy -->"<<correct<<"%"<<endl;
 
 	/////////////////////////////////////////////////recording testing phase
-	Sleep(3 * 1000);
-
+	//Sleep(3 * 1000);
+	cout<<"if you want to search any text speak the corresponding code associated with it"<<endl;
+	cout<<"'In Japan' === 0"<<endl;
+	cout<<"'The fox is known for' === 1"<<endl;
+	cout<<"'The quick brown fox jumps' === 2"<<endl;
+	cout<<"'a cunning character capable of outwitting others' === 3"<<endl;
+	cout<<"'its actions' === 4"<<endl;
+	cout<<"'The fox also appears in' === 5"<<endl;
+	cout<<"'figure of curiosity and admiration' === 6"<<endl;
+	cout<<"'thriving in diverse habitats' === 7"<<endl;
+	cout<<"'DOG' === 8"<<endl;
+	cout<<"'moral lessons through' === 9"<<endl;
+	Sleep(10 * 1000);
 	startrecord();
-	return 0;
+	/////////////////////////////////
+	
+	/////////////////////////searching of word
+	FILE *file5, *output_file;
+    char filename[256];
+    char paragraph[MAX_PARAGRAPH_LENGTH];
+    char search_sentence[100];
+
+   // Input the filename and word to search
+    printf("Enter the filename: ");
+    scanf("%s", filename);
+	if(idx == 1){
+		strcpy(search_sentence, "The fox is known for");
+	}
+	else if(idx == 0){
+		strcpy(search_sentence, "In Japan");
+	}
+	else if(idx == 2){
+		strcpy(search_sentence, "The quick brown fox jumps");
+	}
+	else if(idx == 3){
+		strcpy(search_sentence, "a cunning character capable of outwitting others");
+	}
+	else if(idx == 4){
+		strcpy(search_sentence, "its actions");
+	}
+	else if(idx == 5){
+		strcpy(search_sentence, "The fox also appears in");
+	}
+	else if(idx == 6){
+		strcpy(search_sentence, "figure of curiosity and admiration");
+	}
+	else if(idx == 7){
+		strcpy(search_sentence, "thriving in diverse habitats");
+	}
+	else if(idx == 8){
+		strcpy(search_sentence, "dog");
+	}
+	else if(idx == 9){
+		strcpy(search_sentence, "moral lessons through");
+	}
+	else if(idx == 10){
+		 cout<<"cannot recognize correctly."<<endl;
+	}
+   // printf("Enter the word to search: ");
+    //scanf("%s", search_word);
+
+   file5 = fopen(filename, "r");
+    if (file5 == NULL) {
+        printf("Error: Could not open file %s\n", filename);
+        return 1;
+    }
+
+    // Read the paragraph from the file
+    if (fgets(paragraph, MAX_PARAGRAPH_LENGTH, file5) == NULL) {
+        printf("Error: Could not read from file %s\n", filename);
+        fclose(file5);
+        return 1;
+    }
+    fclose(file5);
+
+    // Convert paragraph and sentence to lowercase for case-insensitive search
+    to_lowercase(paragraph);
+    char lower_search_sentence[MAX_SENTENCE_LENGTH];
+    strcpy(lower_search_sentence, search_sentence);
+    to_lowercase(lower_search_sentence);
+
+    int para_len = strlen(paragraph);
+    int sent_len = strlen(lower_search_sentence);
+
+    // Open the output file
+    output_file = fopen("marked_output.txt", "w");
+    if (output_file == NULL) {
+        printf("Error: Could not create output file\n");
+        return 1;
+    }
+
+    for (int i = 0; i < para_len;) {
+        if (i <= para_len - sent_len && is_sentence_match(paragraph, search_sentence, i, sent_len)) {
+            // Check if the match is standalone (surrounded by spaces or punctuation)
+            if ((i == 0 || isspace(paragraph[i - 1]) || ispunct(paragraph[i - 1])) &&
+                (isspace(paragraph[i + sent_len]) || ispunct(paragraph[i + sent_len]) || paragraph[i + sent_len] == '\0')) {
+                // Write the marked sentence
+                fprintf(output_file, "*****%.*s*****", sent_len, &paragraph[i]);
+                i += sent_len; // Move past the matched sentence
+                continue;
+            }
+        }
+        // Write the current character as-is
+        fputc(paragraph[i], output_file);
+        i++;
+    }
+
+    fclose(output_file);
+
+    printf("The marked paragraph has been written to 'marked_output.txt'.\n");
+    return 0;
 }
+
