@@ -1,0 +1,6 @@
+1.VS studio 2010
+2.create 7 folder namely OUTPUT_a_b, OUTPUT_a_b_final, OUTPUT_CEPSTAL, OUTPUT_OBSEVATION, OUTPUTRECORDING, RECORDING, RECORDINGSEQUENCE.
+3.Dataset folder is also required which I have kept in 244101016_dataset.
+4.To test wheather a text is present in the paragraph or not input paragraph need to be given for that I have created paragraph.txt which is also need to be inserted.
+5.If the text is present in the paragraph it will output the file with a marker on that text in the paragraph.
+6.If you want to run for different digit (like i have run for code 1 in the video ) just change the input parameter in the answer function which is present in the startrecord function(answer function is present in last line of it and start reord function is present in just after 2 function above main function) to the digit you are going to speak. It is basically to check wheather it is recognising the code correctly or not. We can also remove it but I have kept it check if it is recognizing correctly or not.
